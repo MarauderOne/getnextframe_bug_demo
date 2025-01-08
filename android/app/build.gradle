@@ -1,0 +1,64 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def dartDefines = [:]
+if (project.hasProperty('dart-defines')) {
+    dartDefines = dartDefines + project.property('dart-defines')
+            .split(',')
+            .collectEntries { entry ->
+                def pair = new String(entry.decodeBase64(), 'UTF-8').split('=')
+                pair.length == 2 ? [(pair[0]): pair[1]] : [:]
+            }
+}
+
+def iosDartDefines = dartDefines.collect { k, v -> "${k}=${v}" }.join(",")
+project.ext.set("dart-defines-ios", iosDartDefines)
+
+android {
+    namespace = "com.example.getnextframe_bug_demo"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = "25.1.8937393"
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "com.example.getnextframe_bug_demo"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+
+        // Check for dartDefines in case the key is not set
+        if (dartDefines.containsKey('GOOGLE_MAPS_API_KEY')) {
+            resValue "string", "GOOGLE_MAPS_API_KEY", dartDefines['GOOGLE_MAPS_API_KEY']
+        } else {
+            throw new GradleException("GOOGLE_MAPS_API_KEY is missing from dart-defines.")
+        }
+    }
+
+    buildTypes {
+        release {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig = signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
